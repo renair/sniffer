@@ -1,6 +1,6 @@
 #include<arpa/inet.h>
 
-#include "addrconvertor.h"
+#include "addrconverter.h"
 
 //return ulong representation of ip and string representation
 unsigned long addr_to_long(struct sockaddr* sa)

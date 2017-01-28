@@ -8,7 +8,7 @@
 #include<netinet/in.h>
 
 #include "tree.h"
-#include "addrconvertor.h"
+#include "addrconverter.h"
 
 #define BUFF_SIZE 65536
 #define IPLEN 15
@@ -16,7 +16,15 @@
 /*
 int main()
 {
-	
+	tree* t = create_node(0xFFFF0000);
+	tree* node = find_node(t, 0xFFAC0752);
+	node = find_node(t, 0x1FAC0752);
+	node = find_node(t, 0x0FA70752);
+	node = find_node(t, 0xBAFC0757);
+	node = find_node(t, 0xF0AA5732);
+	node = find_node(t, 0xB1AC3742);
+	node->_count += 5000;
+	print_tree(t);
 	return 0;
 }
 */

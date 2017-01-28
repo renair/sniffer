@@ -6,14 +6,16 @@
 struct tree
 {
 	struct tree* _left;
-	struct tree* _rigth;
-	unsigned long _ip;
-	int _count;
+	struct tree* _right;
+	unsigned long _value;
+	unsigned long _count;
 };
 
 typedef struct tree tree;
 
-void tree_init(tree*);
-tree* tree_node(tree*, unsigned long);
+tree* create_node(unsigned long);
+void clean_tree(tree*);
+tree* find_node(tree*, unsigned long);
+void print_tree(tree*);
 
 #endif
