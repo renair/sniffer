@@ -13,22 +13,6 @@
 #define BUFF_SIZE 65536
 #define IPLEN 15
 
-/*
-int main()
-{
-	tree* t = create_node(0xFFFF0000);
-	tree* node = find_node(t, 0xFFAC0752);
-	node = find_node(t, 0x1FAC0752);
-	node = find_node(t, 0x0FA70752);
-	node = find_node(t, 0xBAFC0757);
-	node = find_node(t, 0xF0AA5732);
-	node = find_node(t, 0xB1AC3742);
-	node->_count += 5000;
-	print_tree(t);
-	return 0;
-}
-*/
-
 int main(unsigned int argc, char** argv)
 {
 	int raw_socket = socket(AF_INET, SOCK_RAW, IPPROTO_TCP);
@@ -57,17 +41,19 @@ int main(unsigned int argc, char** argv)
 	}
 	unsigned char* buff = (unsigned char*)malloc(BUFF_SIZE);
 	memset(buff,0,BUFF_SIZE);
+	tree* ip_tree_root = create_node(0xFFFF0000);
+	tree* ip_tree_node;
 	struct sockaddr saddr;
 	unsigned int addr_size = sizeof(saddr);
 	int packets = 0;
 	while(1)
 	{
 		int rec_size = recvfrom(raw_socket, buff, BUFF_SIZE, 0, &saddr, &addr_size);
-		++packets;
 		unsigned long long_ip = addr_to_long(&saddr);
-		char ip[IPLEN];
-		long_to_ip(long_ip, ip, IPLEN);
-		printf("\r%d packets received\t\tLast from: %s                    ",packets, ip);
+		ip_tree_node = find_node(ip_tree_root, long_ip);
+		ip_tree_node->_count += 1;
+		system("clear");
+		print_tree(ip_tree_root);
 		if(rec_size < 0)
 		{
 			close(raw_socket);
