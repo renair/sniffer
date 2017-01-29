@@ -6,6 +6,9 @@
 #include<sys/socket.h>
 #include<sys/epoll.h>
 #include<netinet/in.h>
+#include<netinet/ip.h>
+#include<net/ethernet.h>
+#include<linux/if_packet.h>
 
 #include "tree.h"
 #include "addrconverter.h"
@@ -15,16 +18,14 @@
 
 int main(unsigned int argc, char** argv)
 {
-	int raw_socket = socket(AF_INET, SOCK_RAW, IPPROTO_TCP);
-	//int raw_icmp_socket = socket(AF_INET, SOCK_RAW, IPPROTO_ICMP);
-	//int raw_udp_socket = socket(AF_INET, SOCK_RAW, IPPROTO_UDP);
+	int raw_socket = socket(AF_PACKET, SOCK_RAW, htons(ETH_P_ALL));
 
 	if(raw_socket < 0)
         {
                 printf("Socket opening error!\n");
                 return 1;
         }
-	//TODO CLI interface
+	//TODO binding to device
 	if(argc > 1)
 	{
 		printf("Binding to %s\t\t",argv[1]);
@@ -39,27 +40,28 @@ int main(unsigned int argc, char** argv)
 			printf("Listening all devices for default.");
 		}
 	}
-	unsigned char* buff = (unsigned char*)malloc(BUFF_SIZE);
-	memset(buff,0,BUFF_SIZE);
-	tree* ip_tree_root = create_node(0xFFFF0000);
+
+	tree* ip_tree_root = create_node(0x88880000);
 	tree* ip_tree_node;
-	struct sockaddr saddr;
-	unsigned int addr_size = sizeof(saddr);
-	int packets = 0;
+	unsigned char packet[BUFF_SIZE];
+	struct ether_header* eth = (struct ether_header*)packet;
+	struct iphdr* ip = (struct iphdr*)(packet+sizeof(struct ether_header));
 	while(1)
 	{
-		int rec_size = recvfrom(raw_socket, buff, BUFF_SIZE, 0, &saddr, &addr_size);
-		unsigned long long_ip = addr_to_long(&saddr);
-		ip_tree_node = find_node(ip_tree_root, long_ip);
-		ip_tree_node->_count += 1;
-		system("clear");
-		print_tree(ip_tree_root);
-		if(rec_size < 0)
+		int len = read(raw_socket, packet, BUFF_SIZE);
+		if(len)
 		{
-			close(raw_socket);
-			printf("Error in receivig file from socket.\nExiting.\n");
-			break;
+			char sip[15];
+			//char dip[15];
+			unsigned long source = ip->saddr;
+			//unsigned long dest = ip->daddr;
+			if(long_to_ip(source, sip, 15) != NULL)
+			{
+				ip_tree_node = find_node(ip_tree_root, source);
+				ip_tree_node->_count += 1;
+			}
 		}
 	}
+	print_tree(ip_tree_root);
 	return 0;
 }

@@ -1,4 +1,5 @@
 #include<arpa/inet.h>
+#include<stdio.h>
 
 #include "addrconverter.h"
 
@@ -10,16 +11,25 @@ unsigned long addr_to_long(struct sockaddr* sa)
 
 char* long_to_ip(unsigned long num, char* ip, unsigned int len)
 {
-        struct in_addr addr;
-        addr.s_addr = num;
-        inet_ntop(AF_INET, &addr, ip, len);
-        return ip;
+	struct in_addr addr;
+	addr.s_addr = num;
+	if(inet_ntop(AF_INET, &addr, ip, len))
+	{
+		return ip;
+	}
+//	else if(inet_ntop(AF_INET6, &addr, ip, len))
+//	{
+//		return ip;
+//	}
+	return NULL;
 }
 
 unsigned long ip_to_long(char* ip)
 {
         struct in_addr addr;
-        inet_pton(AF_INET, ip, &addr);
-        return addr.s_addr;
+        if(inet_pton(AF_INET, ip, &addr))
+	{
+		return addr.s_addr;
+	}
+        return -1;
 }
-
