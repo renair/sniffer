@@ -12,6 +12,7 @@
 
 #include "tree.h"
 #include "addrconverter.h"
+#include "client_conn.h"
 
 #define BUFF_SIZE 65536
 #define IPLEN 15
@@ -19,6 +20,8 @@
 int main(unsigned int argc, char** argv)
 {
 	int raw_socket = socket(AF_PACKET, SOCK_RAW, htons(ETH_P_ALL));
+	conn_init_pipe();
+	char* conn_buffer = conn_attach_buffer();
 
 	if(raw_socket < 0)
         {
@@ -59,6 +62,16 @@ int main(unsigned int argc, char** argv)
 			{
 				ip_tree_node = find_node(ip_tree_root, source);
 				ip_tree_node->_count += 1;
+			}
+		}
+		if(conn_data_present(SERVER_MARKER))
+		{
+			char command[50];
+			conn_get_data(command, 50);
+			printf("Command %c\t data:%s\n",command[0],command);
+			if(strcmp(command, "stop") == 0)
+			{
+				break;
 			}
 		}
 	}
