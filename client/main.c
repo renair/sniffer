@@ -40,12 +40,28 @@ int main(int argc, char** argv)
  		{
 			if(argc == 4)
 			{
-				unsigned long addr = 10;//ip_to_long();
-				printf("packets for %s: %lu\n",argv[2], addr);
+				char data[16];
+				data[0] = 'i';
+				strcpy(data+1, argv[2]);
+				conn_set_data(data,16,SERVER_MARKER);
+				while(!conn_data_present(CLIENT_MARKER))
+				{
+					sleep(1);
+				}
+				conn_get_data(data,16);
+				printf("packets for %s: %s\n",argv[2], data);
 			}
 			else if(argc == 3)
 			{
-				printf("Print total amount\n");
+				char data[20];
+				data[0] = 'I';
+				conn_set_data(data,20,SERVER_MARKER);
+				while(!conn_data_present(CLIENT_MARKER))
+				{
+					sleep(1);
+				}
+				conn_get_data(data,16);
+				printf("Total cathed packets:%s\n", data);
 			}
 			else
 			{

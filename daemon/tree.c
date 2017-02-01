@@ -54,6 +54,15 @@ void print_tree(tree* node)
 	}
 }
 
+double count_tree(tree* root)
+{
+	if(root == NULL)
+	{
+		return 0;
+	}
+	return root->_count + count_tree(root->_left) + count_tree(root->_right);
+}
+
 void dump_tree(char* filename, tree* root)
 {
 	if(root != 0)

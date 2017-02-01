@@ -5,11 +5,9 @@
 #include<signal.h>
 #include<arpa/inet.h>
 #include<sys/socket.h>
-#include<sys/epoll.h>
 #include<netinet/in.h>
 #include<netinet/ip.h>
 #include<net/ethernet.h>
-#include<linux/if_packet.h>
 
 #include "tree.h"
 #include "addrconverter.h"
@@ -20,17 +18,17 @@
 
 int raw_socket;
 tree* ip_tree_root;
-char* interface;
+char interface[25];
 
 void exit_handler(int signum);
 
 int main(unsigned int argc, char** argv)
 {
-	interface = "eth0";
+	sprintf(interface, "dumps/%s","eth0");
 	//program intialization part
 	raw_socket = socket(AF_PACKET, SOCK_RAW, htons(ETH_P_ALL));
 	conn_init_pipe();
-	char* conn_buffer = conn_attach_buffer();
+	conn_attach_buffer();
 	signal(SIGTERM, exit_handler);
 	//begin do something
 	if(raw_socket < 0)
@@ -75,16 +73,26 @@ int main(unsigned int argc, char** argv)
 				ip_tree_node->_count += 1;
 			}
 		}
-//		if(conn_data_present(SERVER_MARKER))
-//		{
-//			char command[50];
-//			conn_get_data(command, 50);
-//			printf("Command %c\t data:%s\n",command[0],command);
-//			if(strcmp(command, "stop") == 0)
-//			{
-//				break;
-//			}
-//		}
+		if(conn_data_present(SERVER_MARKER))
+		{
+			char command[25];
+			conn_get_data(command, 25);
+			printf("Command %c\t data:%s\n",command[0],command+1);
+			if(command[0] == 'i')
+			{
+				unsigned long needle = ip_to_long(command+1);
+				tree* needle_node = find_node(ip_tree_root, needle);
+				sprintf(command,"%lu",needle_node->_count);
+				conn_set_data(command, 25, CLIENT_MARKER);
+				continue;
+			}
+			if(command[0] == 'I')
+			{
+				sprintf(command,"%e",count_tree(ip_tree_root));
+				conn_set_data(command, 25, CLIENT_MARKER);
+				continue;
+			}
+		}
 	}
 	return 0;
 }

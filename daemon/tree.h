@@ -19,5 +19,6 @@ tree* find_node(tree*, unsigned long);
 void print_tree(tree*);
 void dump_tree(char*, tree*);
 tree* load_tree(char*);
+double count_tree(tree*);
 
 #endif
