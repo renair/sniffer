@@ -17,5 +17,7 @@ tree* create_node(unsigned long);
 void clean_tree(tree*);
 tree* find_node(tree*, unsigned long);
 void print_tree(tree*);
+void dump_tree(char*, tree*);
+tree* load_tree(char*);
 
 #endif

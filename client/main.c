@@ -1,30 +1,39 @@
 #include<stdio.h>
 #include<stdlib.h>
 #include<string.h>
+#include<signal.h>
 #include<sys/types.h>
 #include<sys/ipc.h>
 #include<sys/shm.h>
+
+#include<unistd.h>
 
 #include "client_conn.h"
 
 int main(int argc, char** argv)
 {
+	int pid = get_sniffer_pid();
 	if(argc > 1)
 	{
 		unsigned int conn = conn_init_pipe();
 		char* pipe = conn_attach_buffer(NULL);
 		if(strcmp(argv[1],"start") == 0)
 		{
-			printf("Starting sniffer!\n");
+			if(pid)
+			{
+				printf("Sniffer was already started!\n");
+				return 0;
+			}
+			system("./snifferd &");
 			return 0;
 		}
 		if(strcmp(argv[1],"stop") == 0)
 		{
-			printf("Stop sniffer!\n");
-			conn_set_data("stop",strlen("stop")+1,SERVER_MARKER);
-			//char buf[50];
-			//conn_get_data(buf,50);
-			//printf("%s\n",buf);
+			if(pid != 0)
+			{
+				printf("Stoping sniffer!(PID:%d)\n", pid);
+				kill(pid, SIGTERM);
+			}
 			return 0;
 		}
 		if(strcmp(argv[1],"show") == 0)

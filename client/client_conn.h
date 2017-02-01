@@ -15,4 +15,8 @@ char conn_data_present(char marker);
 void conn_get_data(char*, unsigned int);
 void conn_set_data(char* buf, unsigned int size, char marker);
 
+void save_sniffer_pid();
+int get_sniffer_pid();
+int remove_sniffer_pid();
+
 #endif

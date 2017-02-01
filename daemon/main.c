@@ -2,6 +2,7 @@
 #include<stdlib.h>
 #include<unistd.h>
 #include<string.h>
+#include<signal.h>
 #include<arpa/inet.h>
 #include<sys/socket.h>
 #include<sys/epoll.h>
@@ -17,17 +18,27 @@
 #define BUFF_SIZE 65536
 #define IPLEN 15
 
+int raw_socket;
+tree* ip_tree_root;
+char* interface;
+
+void exit_handler(int signum);
+
 int main(unsigned int argc, char** argv)
 {
-	int raw_socket = socket(AF_PACKET, SOCK_RAW, htons(ETH_P_ALL));
+	interface = "eth0";
+	//program intialization part
+	raw_socket = socket(AF_PACKET, SOCK_RAW, htons(ETH_P_ALL));
 	conn_init_pipe();
 	char* conn_buffer = conn_attach_buffer();
-
+	signal(SIGTERM, exit_handler);
+	//begin do something
 	if(raw_socket < 0)
         {
                 printf("Socket opening error!\n");
                 return 1;
         }
+	save_sniffer_pid();
 	//TODO binding to device
 	if(argc > 1)
 	{
@@ -44,7 +55,7 @@ int main(unsigned int argc, char** argv)
 		}
 	}
 
-	tree* ip_tree_root = create_node(0x88880000);
+	ip_tree_root = load_tree(interface);
 	tree* ip_tree_node;
 	unsigned char packet[BUFF_SIZE];
 	struct ether_header* eth = (struct ether_header*)packet;
@@ -64,17 +75,27 @@ int main(unsigned int argc, char** argv)
 				ip_tree_node->_count += 1;
 			}
 		}
-		if(conn_data_present(SERVER_MARKER))
-		{
-			char command[50];
-			conn_get_data(command, 50);
-			printf("Command %c\t data:%s\n",command[0],command);
-			if(strcmp(command, "stop") == 0)
-			{
-				break;
-			}
-		}
+//		if(conn_data_present(SERVER_MARKER))
+//		{
+//			char command[50];
+//			conn_get_data(command, 50);
+//			printf("Command %c\t data:%s\n",command[0],command);
+//			if(strcmp(command, "stop") == 0)
+//			{
+//				break;
+//			}
+//		}
 	}
-	print_tree(ip_tree_root);
 	return 0;
+}
+
+
+void exit_handler(int signum)
+{
+	printf("Exiting...\n");
+	close(raw_socket);
+	dump_tree(interface, ip_tree_root);
+	clean_tree(ip_tree_root);
+	remove_sniffer_pid();
+	exit(0);
 }
