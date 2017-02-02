@@ -24,7 +24,7 @@ void exit_handler(int signum);
 
 int main(unsigned int argc, char** argv)
 {
-	sprintf(interface, "dumps/%s","eth0");
+	sprintf(interface, "dumps/%s","all");
 	//program intialization part
 	raw_socket = socket(AF_PACKET, SOCK_RAW, htons(ETH_P_ALL));
 	conn_init_pipe();
@@ -90,6 +90,36 @@ int main(unsigned int argc, char** argv)
 			{
 				sprintf(command,"%e",count_tree(ip_tree_root));
 				conn_set_data(command, 25, CLIENT_MARKER);
+				continue;
+			}
+			
+			if(command[0] == 's')
+			{
+				char local_path[512];
+				sprintf(local_path, "dumps/%s", command+1);
+				printf("\tLocal path: %s\n",local_path);
+				FILE* f = fopen(local_path,"r");
+				if(!f)
+				{
+					fclose(f);
+					printf("\tFile %s not found!",local_path);
+					conn_set_data("n",2,CLIENT_MARKER);
+					continue;
+				}
+				fclose(f);
+				char* path = (char*) malloc(512);
+				realpath(local_path, path);
+				printf("\tServer path: %s\n", path);
+				conn_set_data(path, 512, CLIENT_MARKER);
+				free(path);
+				continue;
+			}
+			if(command[0] == 'S')
+			{
+				char* path = (char*) malloc(512);
+				realpath("dumps", path);
+				conn_set_data(path, 512, CLIENT_MARKER);
+				free(path);
 				continue;
 			}
 		}

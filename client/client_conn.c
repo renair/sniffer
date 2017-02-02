@@ -69,7 +69,7 @@ int get_sniffer_pid()
 	{
 		return 0;
 	}
-	int pid = 1234;
+	int pid = 0;
 	fread(&pid, sizeof(int), 1, pid_file);
 	fclose(pid_file);
 	return pid;
