@@ -5,16 +5,18 @@
 #include<signal.h>
 #include<arpa/inet.h>
 #include<sys/socket.h>
+#include<sys/ioctl.h>
 #include<netinet/in.h>
 #include<netinet/ip.h>
+#include<net/if.h>
 #include<net/ethernet.h>
+#include<linux/if_packet.h>
 
 #include "tree.h"
 #include "addrconverter.h"
 #include "client_conn.h"
 
 #define BUFF_SIZE 65536
-#define IPLEN 15
 
 int raw_socket;
 tree* ip_tree_root;
@@ -24,12 +26,22 @@ void exit_handler(int signum);
 
 int main(unsigned int argc, char** argv)
 {
-	sprintf(interface, "dumps/%s","all");
+	if(argc > 1)
+	{
+		sprintf(interface, "dumps/%s",argv[1]);
+	}
+	else
+	{
+		sprintf(interface, "dumps/%s","all");
+	}
+	printf("Binding to device: %s\n", argv[1]);
 	//program intialization part
 	raw_socket = socket(AF_PACKET, SOCK_RAW, htons(ETH_P_ALL));
 	conn_init_pipe();
 	conn_attach_buffer();
 	signal(SIGTERM, exit_handler);
+	signal(SIGKILL, exit_handler);
+	signal(SIGHUP, exit_handler);
 	//begin do something
 	if(raw_socket < 0)
         {
@@ -37,12 +49,24 @@ int main(unsigned int argc, char** argv)
                 return 1;
         }
 	save_sniffer_pid();
-	//TODO binding to device
+	//binding to device
 	if(argc > 1)
 	{
+		sprintf(interface, "dumps/%s",argv[1]);
 		printf("Binding to %s\t\t",argv[1]);
-		int res = setsockopt(raw_socket, SOL_SOCKET, SO_BINDTODEVICE, argv[1], strlen(argv[1]));
-		if(res == 0)
+		struct sockaddr_ll bind_addr;
+		struct ifreq ioctl_req;
+		memset(&bind_addr,0,sizeof(struct sockaddr_ll));
+		memset(&ioctl_req,0,sizeof(struct ifreq));
+		strcpy(ioctl_req.ifr_name, argv[1]);
+		if((ioctl(raw_socket, SIOCGIFINDEX, &ioctl_req)) == -1)
+		{
+			printf("\nBinding to %s failed!\n",argv[1]);
+		}
+		bind_addr.sll_family = AF_PACKET;
+		bind_addr.sll_ifindex = ioctl_req.ifr_ifindex;
+		bind_addr.sll_protocol = htons( ETH_P_ALL);
+		if(bind(raw_socket, (struct sockaddr*)&bind_addr, sizeof(bind_addr)) == 0)
 		{
 			printf("OK\n");
 		}
@@ -52,7 +76,11 @@ int main(unsigned int argc, char** argv)
 			printf("Listening all devices for default.");
 		}
 	}
-
+	else
+	{
+		sprintf(interface, "dumps/all");
+	}
+	printf("Sniffer runned!\n");
 	ip_tree_root = load_tree(interface);
 	tree* ip_tree_node;
 	unsigned char packet[BUFF_SIZE];
@@ -92,7 +120,6 @@ int main(unsigned int argc, char** argv)
 				conn_set_data(command, 25, CLIENT_MARKER);
 				continue;
 			}
-			
 			if(command[0] == 's')
 			{
 				char local_path[512];
@@ -107,6 +134,7 @@ int main(unsigned int argc, char** argv)
 					continue;
 				}
 				fclose(f);
+				dump_tree(interface, ip_tree_root);
 				char* path = (char*) malloc(512);
 				realpath(local_path, path);
 				printf("\tServer path: %s\n", path);
@@ -116,6 +144,7 @@ int main(unsigned int argc, char** argv)
 			}
 			if(command[0] == 'S')
 			{
+				dump_tree(interface, ip_tree_root);
 				char* path = (char*) malloc(512);
 				realpath("dumps", path);
 				conn_set_data(path, 512, CLIENT_MARKER);

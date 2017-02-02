@@ -76,10 +76,16 @@ int main(int argc, char** argv)
 			if(argc == 4)
 			{
 				printf("Set up interface %s\n", argv[3]);
+				kill(pid, SIGTERM);
+				char buf[25];
+				sprintf(buf, "./snifferd %s &", argv[3]);
+				system(buf);
 			}
 			else if(argc == 3)
 			{
 				printf("Listening all devices.\n");
+				kill(pid, SIGTERM);
+				system("./snifferd &");
 			}
 			else
 			{
