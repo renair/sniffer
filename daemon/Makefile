@@ -19,4 +19,4 @@ $(SNIFF_PATH)/client_conn.o: $(SNIFF_PATH)/client_conn.c $(SNIFF_PATH)/client_co
 	gcc -c -o $@ $(SNIFF_PATH)/client_conn.c
 
 clean_daemon: 
-	rm $(SNIFF_PATH)/*.o
+	rm -f $(SNIFF_PATH)/*.o

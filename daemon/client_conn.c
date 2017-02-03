@@ -1,4 +1,5 @@
 #include<stdio.h>
+#include<stdlib.h>
 #include<string.h>
 #include<errno.h>
 #include<unistd.h>
@@ -34,7 +35,7 @@ char* conn_attach_buffer()
 				default:printf("\tUnknown error in conn_attach_buffer!\n");break;
 			}
 			printf("SHMAT error!\n");
-			return NULL;
+			exit(1);
 		}
 		memset(shm_data, 0, SHM_SIZE);
 		return shm_data;

@@ -26,15 +26,21 @@ void exit_handler(int signum);
 
 int main(unsigned int argc, char** argv)
 {
+	if(chdir("/sbin") == -1)
+	{
+		printf("Cant set default directory.\n");
+		exit(0);
+	}
 	if(argc > 1)
 	{
 		sprintf(interface, "dumps/%s",argv[1]);
+		printf("Binding to device: %s\n", argv[1]);
 	}
 	else
 	{
-		sprintf(interface, "dumps/%s","all");
+		sprintf(interface, "dumps/eth0");
+		printf("Binding to device: eth0\n");
 	}
-	printf("Binding to device: %s\n", argv[1]);
 	//program intialization part
 	raw_socket = socket(AF_PACKET, SOCK_RAW, htons(ETH_P_ALL));
 	conn_init_pipe();
@@ -50,37 +56,36 @@ int main(unsigned int argc, char** argv)
         }
 	save_sniffer_pid();
 	//binding to device
+	char* iface = "eth0";
 	if(argc > 1)
 	{
-		sprintf(interface, "dumps/%s",argv[1]);
-		printf("Binding to %s\t\t",argv[1]);
-		struct sockaddr_ll bind_addr;
-		struct ifreq ioctl_req;
-		memset(&bind_addr,0,sizeof(struct sockaddr_ll));
-		memset(&ioctl_req,0,sizeof(struct ifreq));
-		strcpy(ioctl_req.ifr_name, argv[1]);
-		if((ioctl(raw_socket, SIOCGIFINDEX, &ioctl_req)) == -1)
-		{
-			printf("\nBinding to %s failed!\n",argv[1]);
-		}
-		bind_addr.sll_family = AF_PACKET;
-		bind_addr.sll_ifindex = ioctl_req.ifr_ifindex;
-		bind_addr.sll_protocol = htons( ETH_P_ALL);
-		if(bind(raw_socket, (struct sockaddr*)&bind_addr, sizeof(bind_addr)) == 0)
-		{
-			printf("OK\n");
-		}
-		else
-		{
-			printf("FAILED\n");
-			printf("Listening all devices for default.");
-		}
+		iface = argv[1];
+	}
+	printf("Binding to %s\t\t",iface);
+	struct sockaddr_ll bind_addr;
+	struct ifreq ioctl_req;
+	memset(&bind_addr,0,sizeof(struct sockaddr_ll));
+	memset(&ioctl_req,0,sizeof(struct ifreq));
+	strcpy(ioctl_req.ifr_name, iface);
+	if((ioctl(raw_socket, SIOCGIFINDEX, &ioctl_req)) == -1)
+	{
+		printf("\nBinding to %s failed!\n",argv[1]);
+		exit(1);
+	}
+	bind_addr.sll_family = AF_PACKET;
+	bind_addr.sll_ifindex = ioctl_req.ifr_ifindex;
+	bind_addr.sll_protocol = htons( ETH_P_ALL);
+	if(bind(raw_socket, (struct sockaddr*)&bind_addr, sizeof(bind_addr)) == 0)
+	{
+		printf("OK\n");
 	}
 	else
 	{
-		sprintf(interface, "dumps/all");
+		printf("FAILED\n");
+		printf("Listening all devices for default.");
 	}
-	printf("Sniffer runned!\n");
+
+	printf("Sniffer runned!");
 	ip_tree_root = load_tree(interface);
 	tree* ip_tree_node;
 	unsigned char packet[BUFF_SIZE];
@@ -105,7 +110,7 @@ int main(unsigned int argc, char** argv)
 		{
 			char command[25];
 			conn_get_data(command, 25);
-			printf("Command %c\t data:%s\n",command[0],command+1);
+			//printf("Command %c\t data:%s\n",command[0],command+1);
 			if(command[0] == 'i')
 			{
 				unsigned long needle = ip_to_long(command+1);
@@ -125,15 +130,16 @@ int main(unsigned int argc, char** argv)
 				char local_path[512];
 				sprintf(local_path, "dumps/%s", command+1);
 				printf("\tLocal path: %s\n",local_path);
-				FILE* f = fopen(local_path,"r");
-				if(!f)
-				{
-					fclose(f);
-					printf("\tFile %s not found!",local_path);
-					conn_set_data("n",2,CLIENT_MARKER);
-					continue;
-				}
-				fclose(f);
+				//FILE* f = fopen(local_path,"r");
+				//if(!f)
+				//{
+				//	fclose(f);
+				//	printf("\tFile %s not found!",local_path);
+				//	conn_set_data("n",2,CLIENT_MARKER);
+				//	continue;
+				//}
+				//fclose(f);
+				printf("Interface: %s\n",interface);
 				dump_tree(interface, ip_tree_root);
 				char* path = (char*) malloc(512);
 				realpath(local_path, path);

@@ -1,4 +1,5 @@
 #include<stdio.h>
+#include<stdlib.h>
 #include<string.h>
 #include<errno.h>
 #include<unistd.h>
@@ -34,7 +35,7 @@ char* conn_attach_buffer()
 				default:printf("\tUnknown error in conn_attach_buffer!\n");break;
 			}
 			printf("SHMAT error!\n");
-			return NULL;
+			exit(1);
 		}
 		memset(shm_data, 0, SHM_SIZE);
 		return shm_data;
@@ -50,7 +51,6 @@ char conn_data_present(char marker)
 void conn_get_data(char* buf, unsigned int size)
 {
 	size = strlen(shm_data+1) > size ? size : strlen(shm_data+1)+1;
-	printf("shm_data:%s\n",shm_data+1);
 	strncpy(buf, shm_data+1, size);
 	shm_data[0] = 0;
 }
@@ -58,7 +58,6 @@ void conn_get_data(char* buf, unsigned int size)
 void conn_set_data(char* buf, unsigned int size, char marker)
 {
 	strncpy(shm_data+1, buf, size);
-	printf("buf data:%s\n",buf);
 	shm_data[0] = marker;
 }
 
@@ -69,7 +68,7 @@ int get_sniffer_pid()
 	{
 		return 0;
 	}
-	int pid = 0;
+	int pid = 1234;
 	fread(&pid, sizeof(int), 1, pid_file);
 	fclose(pid_file);
 	return pid;
@@ -84,7 +83,6 @@ void save_sniffer_pid()
 		return;
 	}
 	int pid = getpid();
-	printf("My pid is: %d\n",pid);
 	fwrite(&pid, sizeof(int), 1, pid_file);
 	fclose(pid_file);
 }

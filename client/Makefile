@@ -17,4 +17,4 @@ $(CLIENT_DIR)/addrconverter.o: $(CLIENT_DIR)/addrconverter.c
 	gcc -c -o $@ $(CLIENT_DIR)/addrconverter.c
 
 clean_client:
-	rm $(CLIENT_DIR)/*.o
+	rm -f $(CLIENT_DIR)/*.o
