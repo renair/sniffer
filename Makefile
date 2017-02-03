@@ -13,6 +13,7 @@ install:
 	cp snifferd /sbin/snifferd
 	chmod a+x /sbin/snifferd
 	mkdir -p /sbin/dumps
+	update-rc.d snifferd start stop restart
 	update-rc.d snifferd enable
 
 clean: clean_daemon clean_client
